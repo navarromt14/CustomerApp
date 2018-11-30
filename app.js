@@ -3,7 +3,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const expressValidator = require('express-validator');
-
+const mongojs = require('mongojs');
+const db = mongojs('customerapp', ['users']); //db: customerapp, collection(table): users
 const app = express();
 
 /*
@@ -110,20 +111,35 @@ app.post('/users/add', function(req, res){
 
     if(errors){
         console.log('ERRORS');
-    } else{
+    } else {
         const newUser = {
             first_name: req.body.first_name,
             last_name: req.body.last_name,
             email: req.body.email
             }
-        console.log('SUCCESS');
+        db.users.insert(newUser, function(err, res) {  // add user from form to MongoDB
+            if(err){
+                console.log(err);
+            }
+            res.redirect('/mongo');
+        });
     }    
-})
+});
 
 
 
 app.get('/', function(req, res){
     res.send('Hello World');
+})
+
+// Mongo queries - print all records from 'users' collection
+app.get('/mongo', function(req, res){
+    db.users.find(function (err, docs) {
+        res.render('index', {
+            title: 'Customers',
+            users: docs
+        });
+    });
 })
 
 app.listen(3000, function(){
